@@ -63,7 +63,6 @@ public class MST{
             totalCost += edge.weight;
         }
         System.out.println("Total cost is: " + totalCost);
-        // return mst;
     }
 
     private static void eagerPrimMSTPrivate(String startVertex, HashMap<String, Edge> needToVisit, ArrayList<Edge> mst, ArrayList<String> visitedNodes){
