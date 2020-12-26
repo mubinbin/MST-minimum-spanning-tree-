@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -56,10 +57,14 @@ public class MST{
 
         eagerPrimMSTPrivate(startVertex, needToVisit, mst, visitedNodes);
 
-        System.out.println("MST is: ");
+        if(mst.size() != adjMap.size()-1){
+            throw new Error("Cannot find the MST!");
+        }
+
+        System.out.println("Eager Prim's MST is (From -> To, weight): ");
         
         for (Edge edge : mst) {
-            System.out.println(edge.start + "-> " + edge.end);
+            System.out.println(edge.start + "-> " + edge.end + ", " + edge.weight);
             totalCost += edge.weight;
         }
         System.out.println("Total cost is: " + totalCost);
@@ -70,29 +75,28 @@ public class MST{
         if(!adjMap.containsKey(startVertex))
             throw new Error("Cannot find the MST!");
 
-        if(adjMap.containsKey(startVertex)){
+        visitedNodes.add(startVertex);
+
+        addVertexToVisit(startVertex, visitedNodes, needToVisit);
+
+        // transform needToVisit hash map to priority queue
+        PriorityQueue<Map.Entry<String, Edge>> needToVisitPQ = convertMapToPQByWeight(needToVisit);
+        
+        while(!needToVisitPQ.isEmpty()){
+            Map.Entry<String, Edge> visitedNodeEdgePair = needToVisitPQ.poll();
+
+            mst.add(visitedNodeEdgePair.getValue());
+
+            if(needToVisitPQ.isEmpty()) break;
+
+            startVertex = visitedNodeEdgePair.getKey();
             visitedNodes.add(startVertex);
-
-            addVertexToVisit(startVertex, visitedNodes, needToVisit);
-
-            // transform needToVisit hash map to priority queue
-            PriorityQueue<Map.Entry<String, Edge>> needToVisitPQ = convertMapToPQByWeight(needToVisit);
+            needToVisit.remove(startVertex);
             
-            while(!needToVisitPQ.isEmpty()){
-                Map.Entry<String, Edge> visitedNodeEdgePair = needToVisitPQ.poll();
-
-                mst.add(visitedNodeEdgePair.getValue());
-
-                if(needToVisitPQ.isEmpty()) break;
-
-                startVertex = visitedNodeEdgePair.getKey();
-                visitedNodes.add(startVertex);
-                needToVisit.remove(startVertex);
-                
-                // update all 4 parameters
-                addVertexToVisit(startVertex, visitedNodes, needToVisit);
-                needToVisitPQ = convertMapToPQByWeight(needToVisit);
-            }
+            // update all 4 parameters
+            addVertexToVisit(startVertex, visitedNodes, needToVisit);
+            needToVisitPQ = convertMapToPQByWeight(needToVisit);
+        
         }
     }
 
@@ -127,4 +131,64 @@ public class MST{
         }
     }
 
+
+
+    // https://www.youtube.com/watch?v=jsmMtJpPnhU&t=603s&pbjreload=101
+    public static void lazyPrimMST(String startVertex){
+        ArrayList<String> visited = new ArrayList<String>();
+        ArrayList<Edge> mst = new ArrayList<Edge>();
+        int totalCost =0;
+
+        lazyPrimMSTPrivate(startVertex, visited, mst);
+
+        if(mst.size() != adjMap.size()-1){
+            throw new Error("Cannot find the MST!");
+        }
+
+        System.out.println("Lazy Prim's MST is (From -> To, weight): ");
+        
+        for (Edge edge : mst) {
+            System.out.println(edge.start + "-> " + edge.end + ", " + edge.weight);
+            totalCost += edge.weight;
+        }
+        System.out.println("Total cost is: " + totalCost);
+    }
+
+    private static void lazyPrimMSTPrivate(String startVertex, ArrayList<String> visited, ArrayList<Edge> mst){
+        if(!adjMap.containsKey(startVertex)){
+            throw new Error("No MSt exist!");
+        }
+        
+        visited.add(startVertex);
+
+        PriorityQueue<Edge> edgePQ = new PriorityQueue<Edge>((a,b)->{
+            return a.weight - b.weight;
+        });
+
+        addEdgeToPQ(startVertex, edgePQ, visited);
+
+        while(!edgePQ.isEmpty()){
+            Edge minEdge = edgePQ.poll();
+            if(visited.contains(minEdge.start) && visited.contains(minEdge.end)){
+                continue;
+            }
+            
+            mst.add(minEdge);
+            visited.add(minEdge.end);
+
+            startVertex = minEdge.end;
+            addEdgeToPQ(startVertex, edgePQ, visited);
+        }
+    }
+
+    private static void addEdgeToPQ(String startVertex, PriorityQueue<Edge> edgePQ, ArrayList<String> visited) {
+        ArrayList<Edge> nestedList = adjMap.get(startVertex);
+        for(Edge edge : nestedList){
+            if(!visited.contains(edge.end)){
+                edgePQ.add(edge);
+            }
+        }
+    }
+
+    
 }
